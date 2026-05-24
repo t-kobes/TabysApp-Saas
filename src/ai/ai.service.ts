@@ -38,7 +38,7 @@ export class AiService {
 2. Блок ключевых преимуществ (список через эмодзи).
 3. Блок поисковых SEO-ключей (аккуратно вписанные в текст теги и ключевые слова, по которым товар будут искать на Kaspi).
 
-Формат ответа ИИ: Строгий JSON с двумя полями: "description_ru" и "description_kk". Не выводи никаких дополнительных символов, только JSON.
+Формат ответа ИИ: Строгий JSON с двумя полями: "description_ru" и "description_kk". Не выводи никаких дополнительных символов, только JSON. Не оборачивай JSON в markdown-блоки или любые другие символы.
 `.trim();
 
     const userPrompt = `Название товара: ${productName}\nДополнительные данные: Цена ${data.priceCny} CNY, Вес ${data.weightKg} кг.`;
@@ -55,15 +55,35 @@ export class AiService {
 
       const response = await model.generateContent(userPrompt);
       const content = response.response.text();
-      
+
       if (!content) {
         throw new Error('Empty response from Gemini');
       }
 
-      const parsed = JSON.parse(content) as SeoCardResult;
-      
+      let parsed: SeoCardResult;
+
+      try {
+        parsed = JSON.parse(content) as SeoCardResult;
+      } catch (parseError) {
+        this.logger.error(
+          `Failed to parse Gemini JSON response: ${parseError instanceof Error ? parseError.message : String(parseError)}`,
+        );
+        this.logger.debug(`Gemini raw response: ${content}`);
+
+        return {
+          description_ru: 'Не удалось сформировать описание. Попробуйте ещё раз.',
+          description_kk: 'Сипаттаманы құру мүмкін болмады. Қайта көріңіз.',
+        };
+      }
+
       if (!parsed.description_ru || !parsed.description_kk) {
-        throw new Error('Invalid JSON format returned from AI');
+        this.logger.error('Gemini returned JSON without required fields');
+        this.logger.debug(`Gemini parsed response: ${JSON.stringify(parsed)}`);
+
+        return {
+          description_ru: 'Не удалось сформировать описание. Попробуйте ещё раз.',
+          description_kk: 'Сипаттаманы құру мүмкін болмады. Қайта көріңіз.',
+        };
       }
 
       return parsed;
