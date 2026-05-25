@@ -17,9 +17,9 @@ export class CalculatorService {
    * - purchasePrice  = priceCny × CNY_KZT
    * - shippingCost   = weightKg × cargoRateUsd × USD_KZT
    * - costPrice      = purchasePrice + shippingCost
-   * - kaspiCommission = costPrice × (kaspiCommissionPercent / 100)
-   *   (рассчитана от себестоимости для точки безубыточности)
-   * - breakEvenPrice = costPrice / (1 − kaspiCommissionPercent / 100)
+   * - breakEvenPrice = costPrice / (1 − commissionPercent / 100)
+   * - kaspiCommission = breakEvenPrice × (commissionPercent / 100)
+   *   (маркетплейс берет процент от финальной цены продажи)
    */
   calculateUnitEconomics(dto: CalculateDto): CalculationResult {
     this.validateInput(dto);
@@ -30,7 +30,7 @@ export class CalculatorService {
 
     const commissionMultiplier = dto.kaspiCommissionPercent / 100;
     const breakEvenPriceKzt = costPriceKzt / (1 - commissionMultiplier);
-    const kaspiCommissionKzt = breakEvenPriceKzt - costPriceKzt;
+    const kaspiCommissionKzt = breakEvenPriceKzt * commissionMultiplier;
 
     const result: CalculationResult = {
       purchasePriceKzt: this.round(purchasePriceKzt),
