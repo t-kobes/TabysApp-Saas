@@ -25,15 +25,14 @@ import { RedisSessionStore } from '../redis/redis-session.store';
         // иначе in-memory (store=undefined) — удобно для локальной разработки.
         const store = redis ? new RedisSessionStore(redis) : undefined;
 
-        // Режим запуска: webhook при заданном WEBHOOK_DOMAIN, иначе long-polling.
-        // launchOptions: false отключает авто-launch в nestjs-telegraf —
-        // webhook поднимается вручную в main.ts поверх HTTP-сервера Nest.
-        const useWebhook = !!config.get<string>('WEBHOOK_DOMAIN');
-
+        // Бот РЕТАЙРНУТ: вся логика переехала в Supabase Edge Function `bot`
+        // (Telegram webhook). launchOptions: false — NestJS НЕ запускает polling
+        // и не трогает Telegram. Иначе bot.launch() вызвал бы deleteWebhook и
+        // снёс прод-вебхук. Не включать обратно, пока бот живёт на Edge Function.
         return {
           token,
           middlewares: [session({ store })],
-          launchOptions: useWebhook ? false : { dropPendingUpdates: true }, // Сброс старых/конфликтующих апдейтов в polling
+          launchOptions: false,
         };
       },
     }),
