@@ -395,6 +395,11 @@ verify_jwt = false
 [functions.bot]
 verify_jwt = false
 
+# fx-update — крон тянет курсы НБ РК. Вызывается pg_cron, не браузером;
+# защита — заголовок x-fx-secret (FX_CRON_SECRET).
+[functions.fx-update]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
