@@ -1,4 +1,4 @@
-# B2B TG
+# TABYSAPP
 
 ## Telegram bot backend for business support and guided calculations
 
